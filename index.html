@@ -6,6 +6,24 @@
 <title>Dashboard - Hashtag Store</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+  .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 15px;
+}
+
+.logo {
+  height: 80px;
+}
+
+.store-info {
+  text-align: left;
+  font-size: 14px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -886,15 +904,17 @@ function printCurrentOrder() {
     </head>
     <body>
       <div class="invoice">
-        <div class="header">
-          <img src="${LOGO_URL}" style="height:80px">
-          <div>
-            <p><b>رقم الطلب:</b> ${currentOrderForPrint.orderId}</p>
-            <p><b>التاريخ:</b> ${currentOrderForPrint.date}</p>
-            <p><b>العميل:</b> ${currentOrderForPrint.customerName}</p>
-            <p><b>الهاتف:</b> ${currentOrderForPrint.customerPhone}</p>
-          </div>
-        </div>
+        <<div class="header">
+  <img src="${LOGO_URL}" class="logo">
+  <div class="store-info">
+    <h2>Hashtag Store</h2>
+    <p>رقم الطلب: ${currentOrderForPrint.orderId}</p>
+    <p>التاريخ: ${currentOrderForPrint.date}</p>
+    <p>العميل: ${currentOrderForPrint.customerName}</p>
+    <p>الهاتف: ${currentOrderForPrint.customerPhone}</p>
+  </div>
+</div>
+
 
         <table>
           <tr>
@@ -917,5 +937,6 @@ function printCurrentOrder() {
 
 </body>
 </html>
+
 
 
