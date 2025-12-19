@@ -903,8 +903,13 @@ function printCurrentOrder() {
     </head>
     <body>
       <div class="invoice">
+      .invoice-logo {
+  max-width: 120px;   /* حجم مناسب */
+  max-height: 80px;
+  object-fit: contain;
         <<div class="header">
-  <img src="${LOGO_URL}" class="logo">
+   <img src="${LOGO_URL}" class="invoice-logo">
+
   <div class="store-info">
     <h2>Hashtag Store</h2>
     <p>رقم الطلب: ${currentOrderForPrint.orderId}</p>
@@ -936,6 +941,7 @@ function printCurrentOrder() {
 
 </body>
 </html>
+
 
 
 
