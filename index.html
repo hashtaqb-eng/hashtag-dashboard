@@ -573,6 +573,21 @@ body {
     </div>
     
     <div class="order-details" id="orderDetails"></div>
+
+<button onclick="printCurrentOrder()" style="
+margin-top:15px;
+padding:10px 20px;
+background:#000;
+color:#fff;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-family:'Cairo',sans-serif;
+">
+🖨️ طباعة التفاصيل
+</button>
+
+
     
     <h3 style="color: #ff0055; margin-bottom: 15px;">المنتجات:</h3>
     <ul class="items-list" id="itemsList"></ul>
@@ -792,7 +807,113 @@ window.onclick = function(event) {
     closeItemsModal();
   }
 }
+
+let currentOrderForPrint = null;
+
+/* ===== فتح تفاصيل الطلب ===== */
+function viewItems(order) {
+  currentOrderForPrint = order;
+
+  const modal = document.getElementById('itemsModal');
+  const detailsDiv = document.getElementById('orderDetails');
+  const itemsList = document.getElementById('itemsList');
+
+  detailsDiv.innerHTML = `
+    <div class="detail-row"><span>رقم الطلب:</span><strong>${order.orderId}</strong></div>
+    <div class="detail-row"><span>التاريخ:</span><strong>${order.date}</strong></div>
+    <div class="detail-row"><span>العميل:</span><strong>${order.customerName}</strong></div>
+    <div class="detail-row"><span>الهاتف:</span><strong>${order.customerPhone}</strong></div>
+    <div class="detail-row"><span>المجموع:</span><strong>${order.total} AED</strong></div>
+  `;
+
+  const items = parseItems(order.items);
+  itemsList.innerHTML = items.map(i => `
+    <li class="item-card">
+      <div class="item-name">${i.name}</div>
+      <div class="item-details">
+        <span>المقاس: <strong>${i.size}</strong></span>
+        <span>الكمية: <strong>${i.qty}</strong></span>
+        <span>السعر: <strong>${i.price} AED</strong></span>
+      </div>
+    </li>
+  `).join('');
+
+  modal.classList.add('show');
+}
+
+/* ===== طباعة الفاتورة ===== */
+function printCurrentOrder() {
+  if (!currentOrderForPrint) {
+    alert("لا توجد بيانات للطباعة");
+    return;
+  }
+
+  const LOGO_URL = "https://drive.google.com/uc?export=view&id=1J8InhseuZ-F_CYdVxv7es5RNFKO7vhia";
+  const items = parseItems(currentOrderForPrint.items);
+
+  let rows = "";
+  let total = 0;
+
+  items.forEach((item, i) => {
+    const sub = item.price * item.qty;
+    total += sub;
+    rows += `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${item.name}</td>
+        <td>${item.size}</td>
+        <td>${item.qty}</td>
+        <td>${item.price} AED</td>
+        <td>${sub} AED</td>
+      </tr>
+    `;
+  });
+
+  const win = window.open("", "", "width=900,height=700");
+  win.document.write(`
+    <html lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>فاتورة Hashtag</title>
+      <style>
+        body { font-family: Cairo, sans-serif; direction: rtl; padding: 30px; }
+        .invoice { max-width: 800px; margin:auto; background:#fff; padding:30px; }
+        .header { display:flex; justify-content:space-between; margin-bottom:20px; }
+        table { width:100%; border-collapse:collapse; }
+        th,td { border:1px solid #000; padding:8px; text-align:center; }
+        th { background:#000; color:#fff; }
+      </style>
+    </head>
+    <body>
+      <div class="invoice">
+        <div class="header">
+          <img src="${LOGO_URL}" style="height:80px">
+          <div>
+            <p><b>رقم الطلب:</b> ${currentOrderForPrint.orderId}</p>
+            <p><b>التاريخ:</b> ${currentOrderForPrint.date}</p>
+            <p><b>العميل:</b> ${currentOrderForPrint.customerName}</p>
+            <p><b>الهاتف:</b> ${currentOrderForPrint.customerPhone}</p>
+          </div>
+        </div>
+
+        <table>
+          <tr>
+            <th>#</th><th>المنتج</th><th>المقاس</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th>
+          </tr>
+          ${rows}
+        </table>
+
+        <h3 style="text-align:left">الإجمالي: ${total} AED</h3>
+      </div>
+    </body>
+    </html>
+  `);
+
+  win.document.close();
+  win.print();
+}
 </script>
+
 
 </body>
 </html>
