@@ -888,50 +888,174 @@ function printCurrentOrder() {
 
   const win = window.open("", "", "width=900,height=700");
   win.document.write(`
-    <html lang="ar">
-    <head>
-      <meta charset="UTF-8">
-      <title>فاتورة Hashtag</title>
-      <style>
-        body { font-family: Cairo, sans-serif; direction: rtl; padding: 30px; }
-        .invoice { max-width: 800px; margin:auto; background:#fff; padding:30px; }
-        .header { display:flex; justify-content:space-between; margin-bottom:20px; }
-        table { width:100%; border-collapse:collapse; }
-        th,td { border:1px solid #000; padding:8px; text-align:center; }
-        th { background:#000; color:#fff; }
-      </style>
-    </head>
-    <body>
-      <div class="invoice">
-      .invoice-logo {
-  max-width: 120px;   /* حجم مناسب */
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Invoice - Hashtag</title>
+
+<style>
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
+body {
+  font-family: Cairo, sans-serif;
+  direction: rtl;
+  background: #fff;
+  color: #000;
+  padding: 30px;
+}
+
+.invoice {
+  max-width: 800px;
+  margin: auto;
+  border: 2px solid #000;
+  padding: 30px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #000;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.invoice-logo {
+  max-width: 120px;
   max-height: 80px;
   object-fit: contain;
-        <<div class="header">
-   <img src="${LOGO_URL}" class="invoice-logo">
+}
 
-  <div class="store-info">
-    <h2>Hashtag Store</h2>
-    <p>رقم الطلب: ${currentOrderForPrint.orderId}</p>
-    <p>التاريخ: ${currentOrderForPrint.date}</p>
-    <p>العميل: ${currentOrderForPrint.customerName}</p>
-    <p>الهاتف: ${currentOrderForPrint.customerPhone}</p>
+.company-info {
+  text-align: right;
+  font-size: 14px;
+}
+
+.invoice-title {
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.info-grid div {
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background: #000;
+  color: #fff;
+}
+
+.total {
+  margin-top: 20px;
+  text-align: left;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.footer {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px dashed #000;
+  padding-top: 15px;
+  font-size: 13px;
+}
+
+.qr img {
+  width: 90px;
+  height: 90px;
+}
+</style>
+</head>
+
+<body>
+<div class="invoice">
+
+  <!-- Header -->
+  <div class="header">
+    <img src="${LOGO_URL}" class="invoice-logo">
+    <div class="company-info">
+      <strong>Hashtag Store</strong><br>
+      United Arab Emirates<br>
+      www.hashtagblack.store
+    </div>
   </div>
+
+  <div class="invoice-title">INVOICE</div>
+
+  <!-- Order Info -->
+  <div class="info-grid">
+    <div><strong>رقم الطلب:</strong> ${currentOrderForPrint.orderId}</div>
+    <div><strong>التاريخ:</strong> ${currentOrderForPrint.date}</div>
+    <div><strong>اسم العميل:</strong> ${currentOrderForPrint.customerName}</div>
+    <div><strong>رقم الهاتف:</strong> ${currentOrderForPrint.customerPhone}</div>
+  </div>
+
+  <!-- Items Table -->
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>المنتج</th>
+        <th>المقاس</th>
+        <th>الكمية</th>
+        <th>السعر</th>
+        <th>الإجمالي</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+
+  <div class="total">الإجمالي الكلي: ${total} AED</div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div>
+      شكراً لتسوقكم من Hashtag 🖤<br>
+      This invoice is computer generated.
+    </div>
+
+    <div class="qr">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentOrderForPrint.orderId}">
+    </div>
+  </div>
+
 </div>
-
-
-        <table>
-          <tr>
-            <th>#</th><th>المنتج</th><th>المقاس</th><th>الكمية</th><th>السعر</th><th>الإجمالي</th>
-          </tr>
-          ${rows}
-        </table>
-
-        <h3 style="text-align:left">الإجمالي: ${total} AED</h3>
-      </div>
-    </body>
-    </html>
-  `);
+</body>
+</html>
+`);
 
   win.document.close();
   win.print();
@@ -941,6 +1065,7 @@ function printCurrentOrder() {
 
 </body>
 </html>
+
 
 
 
