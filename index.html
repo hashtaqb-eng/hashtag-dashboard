@@ -14,6 +14,12 @@
   border-bottom: 2px solid #000;
   padding-bottom: 15px;
 }
+.login-logo {
+  display: block;
+  margin: 0 auto 15px;
+  max-width: 90px;   /* حجم صغير */
+  height: auto;
+}
 
 .logo {
   height: 80px;
@@ -57,7 +63,7 @@ body {
 }
 
 .login-box h1 {
-  color: #ff0055;
+  color:  #ffffff;
   margin-bottom: 10px;
   text-align: center;
 }
@@ -493,7 +499,12 @@ body {
 <!-- صفحة تسجيل الدخول -->
 <div id="loginPage">
   <div class="login-box">
-    <h1>🖤 Hashtag Dashboard</h1>
+    <img 
+    src="https://hashtaqb-eng.github.io/hashtag-dashboard/logo.png"
+    class="login-logo"
+    alt="Hashtag Logo"
+  >
+    <h1> Hashtag Black Dashboard</h1>
     <p>لوحة التحكم الإدارية</p>
     <div class="error-msg" id="errorMsg">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <form onsubmit="login(event)">
@@ -1065,12 +1076,3 @@ th {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
