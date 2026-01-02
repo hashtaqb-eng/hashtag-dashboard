@@ -1240,7 +1240,7 @@ th {
       This invoice is computer generated.
     </div>
     <div class="qr">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${currentOrderForPrint.orderId}">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://hashtaqb-eng.github.io/hashtagblackqrcodecheack/?orderId=' + currentOrderForPrint.orderId)}">
     </div>
   </div>
 </div>
@@ -1273,6 +1273,7 @@ window.onclick = function(event) {
 </script>
 </body>
 </html>
+
 
 
 
