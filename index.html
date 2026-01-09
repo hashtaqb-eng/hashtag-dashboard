@@ -954,15 +954,14 @@ function updateStats() {
   const shipping = allOrders.filter(o => o.status === 'مع شركة الشحن').length;
   const delivered = allOrders.filter(o => o.status === 'تم التسليم').length;
   const cancelled = allOrders.filter(o => o.status === 'تم الإلغاء').length;
-  const revenue = allOrders
-    const revenue = allOrders
-  .filter(o => 
-    o.status !== 'قيد الانتظار' &&
-    o.status !== 'تم الإلغاء'
-  )
-  .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
-  
+  // ✅ الإيرادات: كل الحالات ما عدا (قيد الانتظار + تم الإلغاء)
+  const revenue = allOrders
+    .filter(o =>
+      o.status !== 'قيد الانتظار' &&
+      o.status !== 'تم الإلغاء'
+    )
+    .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
   document.getElementById('totalOrders').innerText = total;
   document.getElementById('paidOrders').innerText = paid;
   document.getElementById('pendingOrders').innerText = pending;
@@ -1402,6 +1401,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
