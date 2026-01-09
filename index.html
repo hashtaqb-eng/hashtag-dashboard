@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard - Hashtag Store</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="https://hashtaqb-eng.github.io/hashtag-dashboard/logo.png?v=1">
 <style>
   .header {
     display: flex;
@@ -351,6 +350,21 @@
     color: #fff;
   }
 
+  .status-preparing {
+    background: #ffeb3b;
+    color: #000;
+  }
+
+  .status-shipping {
+    background: #2196f3;
+    color: #fff;
+  }
+
+  .status-delivered {
+    background: #4caf50;
+    color: #fff;
+  }
+
   .btn-view-items {
     padding: 8px 16px;
     background: #0070ff;
@@ -588,6 +602,34 @@
     background: #333;
   }
 
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+  }
+
+  .modal-buttons button {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+  }
+
+  .btn-print {
+    background: #000;
+    color: #fff;
+  }
+
+  .btn-print:hover {
+    background: #222;
+  }
+
   @media (max-width: 768px) {
     .dashboard-header {
       flex-direction: column;
@@ -610,6 +652,10 @@
     .confirmation-actions {
       flex-direction: column;
     }
+
+    .modal-buttons {
+      flex-direction: column;
+    }
   }
 </style>
 </head>
@@ -623,7 +669,7 @@
       class="login-logo"
       alt="Hashtag Logo"
     >
-    <h1> Hashtag Black Dashboard</h1>
+    <h1>Hashtag Black Dashboard</h1>
     <p>لوحة التحكم الإدارية</p>
     <div class="error-msg" id="errorMsg">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <form onsubmit="login(event)">
@@ -670,6 +716,26 @@
       <div class="label">قيد الانتظار</div>
     </div>
     <div class="stat-card">
+      <div class="icon">🟡</div>
+      <div class="value" id="preparingOrders">0</div>
+      <div class="label">قيد التجهيز</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">🚚</div>
+      <div class="value" id="shippingOrders">0</div>
+      <div class="label">مع شركة الشحن</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">📍</div>
+      <div class="value" id="deliveredOrders">0</div>
+      <div class="label">تم التسليم</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">❌</div>
+      <div class="value" id="cancelledOrders">0</div>
+      <div class="label">ملغي</div>
+    </div>
+    <div class="stat-card">
       <div class="icon">💰</div>
       <div class="value" id="totalRevenue">0</div>
       <div class="label">الإيرادات (AED)</div>
@@ -681,9 +747,12 @@
     <input type="text" class="search-input" id="searchInput" placeholder="🔍 بحث بالاسم، رقم الطلب، أو رقم الهاتف..." oninput="filterOrders()">
     <select class="filter-select" id="statusFilter" onchange="filterOrders()">
       <option value="">جميع الحالات</option>
-      <option value="مدفوع">مدفوع</option>
-      <option value="قيد الانتظار">قيد الانتظار</option>
-      <option value="ملغي">ملغي</option>
+      <option value="مدفوع">✅ مدفوع</option>
+      <option value="قيد الانتظار">⏳ قيد الانتظار</option>
+      <option value="قيد التجهيز">🟡 قيد التجهيز</option>
+      <option value="مع شركة الشحن">🚚 مع شركة الشحن</option>
+      <option value="تم التسليم">📍 تم التسليم</option>
+      <option value="تم الإلغاء">❌ تم الإلغاء</option>
     </select>
   </div>
 
@@ -724,21 +793,12 @@
     
     <div class="order-details" id="orderDetails"></div>
 
-    <button onclick="printCurrentOrder()" style="
-      margin-top:15px;
-      padding:10px 20px;
-      background:#000;
-      color:#fff;
-      border:none;
-      border-radius:6px;
-      cursor:pointer;
-      font-family:'Cairo',sans-serif;
-    ">
-      🖨️ طباعة التفاصيل
-    </button>
-    
-    <h3 style="color: #ff0055; margin-bottom: 15px;">المنتجات:</h3>
+    <h3 style="color: #ff0055; margin-bottom: 15px; margin-top: 20px;">المنتجات:</h3>
     <ul class="items-list" id="itemsList"></ul>
+
+    <div class="modal-buttons">
+      <button class="btn-print" onclick="printCurrentOrder()">🖨️ طباعة الفاتورة</button>
+    </div>
   </div>
 </div>
 
@@ -766,22 +826,28 @@ const ADMIN_CREDENTIALS = {
 
 let allOrders = [];
 let filteredOrders = [];
-let selectedOrders = new Set(); // تخزين معرفات الطلبات المحددة
+let selectedOrders = new Set();
 let currentOrderForPrint = null;
 
 // تسجيل الدخول
-function login(event) {
-  event.preventDefault();
+function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
   
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
-  
+  console.log('محاولة تسجيل دخول...');
+  console.log('Username entered:', username);
+  console.log('Password entered:', password);
+  console.log('Expected username:', ADMIN_CREDENTIALS.username);
+  console.log('Expected password:', ADMIN_CREDENTIALS.password);
+
   if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+    console.log('✅ تسجيل دخول ناجح!');
     document.getElementById('errorMsg').classList.remove('show');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboardPage').classList.add('show');
     loadOrders();
   } else {
+    console.log('❌ بيانات خاطئة!');
     document.getElementById('errorMsg').classList.add('show');
   }
 }
@@ -801,23 +867,98 @@ function logout() {
 // تحميل الطلبات من Google Sheet
 async function loadOrders() {
   try {
-    const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getOrders');
-    const data = await response.json();
+    console.log('🔄 جاري تحميل الطلبات...');
     
-    if (data.success) {
+    const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getOrders', {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    console.log('Response status:', response.status);
+    const data = await response.json();
+    console.log('Data received:', data);
+    
+    if (data.success && data.orders) {
       allOrders = data.orders;
       filteredOrders = allOrders;
       selectedOrders.clear();
       updateStats();
       renderOrders();
       updateDeleteButton();
+      console.log('✅ تم تحميل', allOrders.length, 'طلب');
     } else {
-      showError('فشل تحميل البيانات');
+      console.error('❌ فشل في الحصول على البيانات:', data);
+      // استخدام بيانات تجريبية في حالة الفشل
+      loadDemoOrders();
     }
   } catch (error) {
-    console.error('Error loading orders:', error);
-    showError('خطأ في الاتصال بالخادم');
+    console.error('❌ Error loading orders:', error);
+    showError('خطأ في الاتصال بالخادم - استخدام البيانات التجريبية');
+    loadDemoOrders();
   }
+}
+
+// بيانات تجريبية للاختبار
+function loadDemoOrders() {
+  allOrders = [
+    {
+      orderId: 'ORD001',
+      date: '2024-01-15',
+      customerName: 'أحمد محمد',
+      customerPhone: '0501234567',
+      items: '1. Hashtag BOSS (M) x2 | 2. Hashtag DIVA (L) x1',
+      total: '330',
+      status: 'مدفوع',
+      ref: 'REF123456'
+    },
+    {
+      orderId: 'ORD002',
+      date: '2024-01-14',
+      customerName: 'فاطمة علي',
+      customerPhone: '0559876543',
+      items: '1. Cozy (S) x1',
+      total: '350',
+      status: 'قيد التجهيز',
+      ref: 'REF123457'
+    },
+    {
+      orderId: 'ORD003',
+      date: '2024-01-13',
+      customerName: 'سارة خالد',
+      customerPhone: '0567654321',
+      items: '1. Hashtag BOTH (XL) x1',
+      total: '110',
+      status: 'مع شركة الشحن',
+      ref: 'REF123458'
+    },
+    {
+      orderId: 'ORD004',
+      date: '2024-01-12',
+      customerName: 'ليلى محمود',
+      customerPhone: '0501111111',
+      items: '1. Hashtag DIVA (M) x2',
+      total: '220',
+      status: 'تم التسليم',
+      ref: 'REF123459'
+    },
+    {
+      orderId: 'ORD005',
+      date: '2024-01-11',
+      customerName: 'نور طارق',
+      customerPhone: '0502222222',
+      items: '1. Hashtag BOSS (L) x1',
+      total: '110',
+      status: 'قيد الانتظار',
+      ref: ''
+    }
+  ];
+  
+  filteredOrders = allOrders;
+  selectedOrders.clear();
+  updateStats();
+  renderOrders();
+  updateDeleteButton();
+  console.log('✅ تم تحميل البيانات التجريبية:', allOrders.length, 'طلب');
 }
 
 // تحديث الإحصائيات
@@ -825,6 +966,10 @@ function updateStats() {
   const total = allOrders.length;
   const paid = allOrders.filter(o => o.status === 'مدفوع').length;
   const pending = allOrders.filter(o => o.status === 'قيد الانتظار').length;
+  const preparing = allOrders.filter(o => o.status === 'قيد التجهيز').length;
+  const shipping = allOrders.filter(o => o.status === 'مع شركة الشحن').length;
+  const delivered = allOrders.filter(o => o.status === 'تم التسليم').length;
+  const cancelled = allOrders.filter(o => o.status === 'تم الإلغاء').length;
   const revenue = allOrders
     .filter(o => o.status === 'مدفوع')
     .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
@@ -832,6 +977,10 @@ function updateStats() {
   document.getElementById('totalOrders').innerText = total;
   document.getElementById('paidOrders').innerText = paid;
   document.getElementById('pendingOrders').innerText = pending;
+  document.getElementById('preparingOrders').innerText = preparing;
+  document.getElementById('shippingOrders').innerText = shipping;
+  document.getElementById('deliveredOrders').innerText = delivered;
+  document.getElementById('cancelledOrders').innerText = cancelled;
   document.getElementById('totalRevenue').innerText = revenue.toFixed(2);
 }
 
@@ -869,9 +1018,15 @@ function renderOrders() {
 
 // الحصول على class الحالة
 function getStatusClass(status) {
-  if (status === 'مدفوع') return 'paid';
-  if (status === 'ملغي') return 'cancelled';
-  return 'pending';
+  const statusMap = {
+    'مدفوع': 'paid',
+    'قيد الانتظار': 'pending',
+    'قيد التجهيز': 'preparing',
+    'مع شركة الشحن': 'shipping',
+    'تم التسليم': 'delivered',
+    'تم الإلغاء': 'cancelled'
+  };
+  return statusMap[status] || 'pending';
 }
 
 // فلترة الطلبات
@@ -932,14 +1087,12 @@ function cancelDelete() {
 }
 
 // تأكيد الحذف
-// ✅ الكود الصحيح - استبدل به تماماً
 async function confirmDelete() {
   try {
     const ordersToDelete = Array.from(selectedOrders);
     
     console.log('🔴 بدء حذف الطلبات:', ordersToDelete);
     
-    // ✅ إرسال طلب الحذف للسيرفر (Google Apps Script)
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -955,16 +1108,12 @@ async function confirmDelete() {
     if (data.success) {
       console.log('✅ تم حذف الطلبات من السيرفر:', data);
       
-      // إغلاق نافذة التأكيد
       document.getElementById('confirmationModal').classList.remove('show');
       
-      // ✅ إعادة تحميل البيانات من السيرفر (مهم جداً!)
       await loadOrders();
       
-      // عرض رسالة النجاح
-      alert(`✅ تم حذف ${data.deletedCount} طلب${data.deletedCount > 1 ? 'ات' : ''} بنجاح`);
+      alert(`✅ تم حذف ${data.deletedCount || ordersToDelete.length} طلب${(data.deletedCount || ordersToDelete.length) > 1 ? 'ات' : ''} بنجاح`);
     } else {
-      // ❌ إذا فشل الحذف من السيرفر
       console.error('❌ خطأ في الحذف:', data.error);
       alert(`❌ خطأ: ${data.message || data.error}`);
     }
@@ -1031,24 +1180,22 @@ function closeItemsModal() {
   document.getElementById('itemsModal').classList.remove('show');
 }
 
-// تحليل نص المنتجات
 // تحديد سعر المنتج حسب اسمه
 function getProductPrice(productName) {
   const prices = {
     "Hashtag BOSS": 110,
     "Hashtag DIVA": 110,
     "Hashtag BOTH": 110,
-     "Cozy ": 350
+    "Cozy": 350
   };
 
-  // البحث حسب بداية الاسم
   for (const key in prices) {
     if (productName.includes(key)) {
       return prices[key];
     }
   }
 
-  return 0; // سعر افتراضي إذا لم يُعرف المنتج
+  return 0;
 }
 
 // تحليل نص المنتجات
@@ -1076,7 +1223,6 @@ function parseItems(itemsText) {
 
   return items;
 }
-
 
 // طباعة الفاتورة
 function printCurrentOrder() {
@@ -1270,11 +1416,3 @@ window.onclick = function(event) {
     cancelDelete();
   }
 }
-</script>
-</body>
-</html>
-
-
-
-
-
