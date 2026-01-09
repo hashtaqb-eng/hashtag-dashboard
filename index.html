@@ -955,8 +955,13 @@ function updateStats() {
   const delivered = allOrders.filter(o => o.status === 'تم التسليم').length;
   const cancelled = allOrders.filter(o => o.status === 'تم الإلغاء').length;
   const revenue = allOrders
-    .filter(o => o.status === 'مدفوع')
-    .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+    const revenue = allOrders
+  .filter(o => 
+    o.status !== 'قيد الانتظار' &&
+    o.status !== 'تم الإلغاء'
+  )
+  .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+
   
   document.getElementById('totalOrders').innerText = total;
   document.getElementById('paidOrders').innerText = paid;
@@ -1397,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
