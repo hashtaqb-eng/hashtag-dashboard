@@ -672,7 +672,7 @@
     <h1>Hashtag Black Dashboard</h1>
     <p>لوحة التحكم الإدارية</p>
     <div class="error-msg" id="errorMsg">اسم المستخدم أو كلمة المرور غير صحيحة</div>
-    <form onsubmit="login(event)">
+    <form onsubmit="login(); return false;">
       <div class="form-group">
         <label>اسم المستخدم</label>
         <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
@@ -820,8 +820,8 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyE96Kn9qqPLd
 
 // بيانات تسجيل الدخول
 const ADMIN_CREDENTIALS = {
-  username: "admin",
-  password: "hashtag2024"
+  username: "1234",
+  password: "123456"
 };
 
 let allOrders = [];
@@ -834,20 +834,12 @@ function login() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
   
-  console.log('محاولة تسجيل دخول...');
-  console.log('Username entered:', username);
-  console.log('Password entered:', password);
-  console.log('Expected username:', ADMIN_CREDENTIALS.username);
-  console.log('Expected password:', ADMIN_CREDENTIALS.password);
-
   if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-    console.log('✅ تسجيل دخول ناجح!');
     document.getElementById('errorMsg').classList.remove('show');
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboardPage').classList.add('show');
     loadOrders();
   } else {
-    console.log('❌ بيانات خاطئة!');
     document.getElementById('errorMsg').classList.add('show');
   }
 }
@@ -867,16 +859,12 @@ function logout() {
 // تحميل الطلبات من Google Sheet
 async function loadOrders() {
   try {
-    console.log('🔄 جاري تحميل الطلبات...');
-    
     const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getOrders', {
       method: 'GET',
       mode: 'cors'
     });
     
-    console.log('Response status:', response.status);
     const data = await response.json();
-    console.log('Data received:', data);
     
     if (data.success && data.orders) {
       allOrders = data.orders;
@@ -885,15 +873,12 @@ async function loadOrders() {
       updateStats();
       renderOrders();
       updateDeleteButton();
-      console.log('✅ تم تحميل', allOrders.length, 'طلب');
     } else {
-      console.error('❌ فشل في الحصول على البيانات:', data);
       // استخدام بيانات تجريبية في حالة الفشل
       loadDemoOrders();
     }
   } catch (error) {
-    console.error('❌ Error loading orders:', error);
-    showError('خطأ في الاتصال بالخادم - استخدام البيانات التجريبية');
+    // استخدام بيانات تجريبية في حالة الفشل
     loadDemoOrders();
   }
 }
@@ -958,7 +943,6 @@ function loadDemoOrders() {
   updateStats();
   renderOrders();
   updateDeleteButton();
-  console.log('✅ تم تحميل البيانات التجريبية:', allOrders.length, 'طلب');
 }
 
 // تحديث الإحصائيات
@@ -1091,8 +1075,6 @@ async function confirmDelete() {
   try {
     const ordersToDelete = Array.from(selectedOrders);
     
-    console.log('🔴 بدء حذف الطلبات:', ordersToDelete);
-    
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -1103,23 +1085,15 @@ async function confirmDelete() {
 
     const data = await response.json();
     
-    console.log('📦 رد السيرفر:', data);
-    
     if (data.success) {
-      console.log('✅ تم حذف الطلبات من السيرفر:', data);
-      
       document.getElementById('confirmationModal').classList.remove('show');
-      
       await loadOrders();
-      
       alert(`✅ تم حذف ${data.deletedCount || ordersToDelete.length} طلب${(data.deletedCount || ordersToDelete.length) > 1 ? 'ات' : ''} بنجاح`);
     } else {
-      console.error('❌ خطأ في الحذف:', data.error);
       alert(`❌ خطأ: ${data.message || data.error}`);
     }
     
   } catch (error) {
-    console.error('❌ خطأ في الاتصال:', error);
     alert(`❌ خطأ في الاتصال بالسيرفر:\n${error.message}`);
   }
 }
@@ -1398,12 +1372,6 @@ th {
   win.print();
 }
 
-// عرض رسالة خطأ
-function showError(message) {
-  const tbody = document.getElementById('ordersTableBody');
-  tbody.innerHTML = `<tr><td colspan="9" class="no-data" style="color: #f44336;">${message}</td></tr>`;
-}
-
 // إغلاق Modal عند الضغط خارجها
 window.onclick = function(event) {
   const modal = document.getElementById('itemsModal');
@@ -1416,3 +1384,15 @@ window.onclick = function(event) {
     cancelDelete();
   }
 }
+
+// تفعيل الضغط على Enter في حقول الإدخال
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      login();
+    }
+  });
+});
+</script>
+</body>
+</html>
