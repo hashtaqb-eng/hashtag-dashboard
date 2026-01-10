@@ -698,7 +698,7 @@
     </div>
   </div>
 
-  <!-- Statistics Cards -->
+  <!-- بطاقات الحالات-->
   <div class="stats-container">
     <div class="stat-card">
       <div class="icon">📦</div>
@@ -742,7 +742,7 @@
     </div>
   </div>
 
-  <!-- Search & Filter -->
+  <!-- البحث و الفلترة-->
   <div class="search-container">
     <input type="text" class="search-input" id="searchInput" placeholder="🔍 بحث بالاسم، رقم الطلب، أو رقم الهاتف..." oninput="filterOrders()">
     <select class="filter-select" id="statusFilter" onchange="filterOrders()">
@@ -756,7 +756,7 @@
     </select>
   </div>
 
-  <!-- Orders Table -->
+  <!-- جدول الطلبات -->
   <div class="table-container">
     <div class="orders-table">
       <table>
@@ -783,7 +783,7 @@
   </div>
 </div>
 
-<!-- Items Modal -->
+<!-- تفاصيل الطلب -->
 <div id="itemsModal">
   <div class="modal-content">
     <div class="modal-header">
@@ -863,86 +863,25 @@ async function loadOrders() {
       method: 'GET',
       mode: 'cors'
     });
-    
+
     const data = await response.json();
-    
+
     if (data.success && data.orders) {
       allOrders = data.orders;
-      filteredOrders = allOrders;
-      selectedOrders.clear();
-      updateStats();
-      renderOrders();
-      updateDeleteButton();
     } else {
-      // استخدام بيانات تجريبية في حالة الفشل
-      loadDemoOrders();
+      allOrders = [];
     }
-  } catch (error) {
-    // استخدام بيانات تجريبية في حالة الفشل
-    loadDemoOrders();
-  }
-}
 
-// بيانات تجريبية للاختبار
-function loadDemoOrders() {
-  allOrders = [
-    {
-      orderId: 'ORD001',
-      date: '2024-01-15',
-      customerName: 'أحمد محمد',
-      customerPhone: '0501234567',
-      items: '1. Hashtag BOSS (M) x2 | 2. Hashtag DIVA (L) x1',
-      total: '330',
-      status: 'مدفوع',
-      ref: 'REF123456'
-    },
-    {
-      orderId: 'ORD002',
-      date: '2024-01-14',
-      customerName: 'فاطمة علي',
-      customerPhone: '0559876543',
-      items: '1. Cozy (S) x1',
-      total: '350',
-      status: 'قيد التجهيز',
-      ref: 'REF123457'
-    },
-    {
-      orderId: 'ORD003',
-      date: '2024-01-13',
-      customerName: 'سارة خالد',
-      customerPhone: '0567654321',
-      items: '1. Hashtag BOTH (XL) x1',
-      total: '110',
-      status: 'مع شركة الشحن',
-      ref: 'REF123458'
-    },
-    {
-      orderId: 'ORD004',
-      date: '2024-01-12',
-      customerName: 'ليلى محمود',
-      customerPhone: '0501111111',
-      items: '1. Hashtag DIVA (M) x2',
-      total: '220',
-      status: 'تم التسليم',
-      ref: 'REF123459'
-    },
-    {
-      orderId: 'ORD005',
-      date: '2024-01-11',
-      customerName: 'نور طارق',
-      customerPhone: '0502222222',
-      items: '1. Hashtag BOSS (L) x1',
-      total: '110',
-      status: 'قيد الانتظار',
-      ref: ''
-    }
-  ];
-  
-  filteredOrders = allOrders;
-  selectedOrders.clear();
-  updateStats();
-  renderOrders();
-  updateDeleteButton();
+    filteredOrders = allOrders;
+    selectedOrders.clear();
+    updateStats();
+    renderOrders();
+    updateDeleteButton();
+
+  } catch (error) {
+    console.error(error);
+    alert("❌ خطأ في تحميل الطلبات");
+  }
 }
 
 // تحديث الإحصائيات
@@ -1229,6 +1168,13 @@ function printCurrentOrder() {
       </tr>
     `;
   });
+// تحديد هل يعتبر الطلب مدفوع
+const isPaid =
+  currentOrderForPrint.status !== 'قيد الانتظار' &&
+  currentOrderForPrint.status !== 'تم الإلغاء';
+const paymentBadge = isPaid
+  ? `<div class="paid-badge">✅ تم الدفع</div>`
+  : `<div class="unpaid-badge">⏳ غير مدفوع</div>`;
 
   const win = window.open("", "", "width=900,height=700");
   win.document.write(`
@@ -1269,6 +1215,30 @@ body {
   max-height: 80px;
   object-fit: contain;
 }
+.paid-badge {
+  background: #000;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+  margin: 15px auto;
+  width: fit-content;
+  font-size: 16px;
+}
+
+.unpaid-badge {
+  background: #ccc;
+  color: #000;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+  margin: 15px auto;
+  width: fit-content;
+  font-size: 16px;
+}
+
 .company-info {
   text-align: right;
   font-size: 14px;
@@ -1337,6 +1307,7 @@ th {
     </div>
   </div>
   <div class="invoice-title">INVOICE</div>
+${paymentBadge}
   <div class="info-grid">
     <div><strong>رقم الطلب:</strong> ${currentOrderForPrint.orderId}</div>
     <div><strong>التاريخ:</strong> ${currentOrderForPrint.date}</div>
@@ -1401,8 +1372,3 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
-
-
-
-
