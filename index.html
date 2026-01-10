@@ -94,11 +94,18 @@
     color: #fff;
     font-family: 'Cairo', sans-serif;
     font-size: 14px;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 3px;
   }
 
   .form-group input:focus {
     outline: none;
     border-color: #ff0055;
+  }
+
+  .pin-input {
+    font-family: monospace !important;
   }
 
   .btn-login {
@@ -132,6 +139,13 @@
 
   .error-msg.show {
     display: block;
+  }
+
+  .login-info {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-top: 15px;
   }
 
   /* Dashboard */
@@ -671,17 +685,16 @@
     >
     <h1>Hashtag Black Dashboard</h1>
     <p>لوحة التحكم الإدارية</p>
-    <div class="error-msg" id="errorMsg">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <div class="error-msg" id="errorMsg">PIN غير صحيح</div>
     <form onsubmit="login(); return false;">
       <div class="form-group">
-        <label>اسم المستخدم</label>
-        <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
+        <label>أدخل PIN للإدارة</label>
+        <input type="password" id="pin" placeholder="123456" required maxlength="6" class="pin-input">
       </div>
-      <div class="form-group">
-        <label>كلمة المرور</label>
-        <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+      <button type="submit" class="btn-login">🔐 دخول</button>
+      <div class="login-info">
+        PIN مكون من 6 أرقام فقط
       </div>
-      <button type="submit" class="btn-login">🔐 تسجيل الدخول</button>
     </form>
   </div>
 </div>
@@ -818,28 +831,38 @@
 // رابط Google Apps Script
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyE96Kn9qqPLdUm6iC2n7QPfMryGXYFB8GSdVCDSmBbZzsO7iMyIfZhsTTERD_Y_-pf1Q/exec";
 
-// بيانات تسجيل الدخول
-const ADMIN_CREDENTIALS = {
-  username: "1234",
-  password: "123456"
-};
+// PIN المخزن محلياً
+let currentPin = "";
 
-let allOrders = [];
-let filteredOrders = [];
-let selectedOrders = new Set();
-let currentOrderForPrint = null;
-
-// تسجيل الدخول
-function login() {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+// تسجيل الدخول عبر PIN فقط
+async function login() {
+  const pin = document.getElementById('pin').value.trim();
   
-  if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-    document.getElementById('errorMsg').classList.remove('show');
-    document.getElementById('loginPage').style.display = 'none';
-    document.getElementById('dashboardPage').classList.add('show');
-    loadOrders();
-  } else {
+  if (!pin || pin.length < 4) {
+    document.getElementById('errorMsg').textContent = "الرجاء إدخال PIN صحيح";
+    document.getElementById('errorMsg').classList.add('show');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=login&pin=${encodeURIComponent(pin)}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      // حفظ PIN للاستخدام لاحقاً
+      currentPin = pin;
+      
+      document.getElementById('errorMsg').classList.remove('show');
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('dashboardPage').classList.add('show');
+      loadOrders();
+    } else {
+      document.getElementById('errorMsg').textContent = "PIN غير صحيح";
+      document.getElementById('errorMsg').classList.add('show');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    document.getElementById('errorMsg').textContent = "خطأ في الاتصال بالخادم";
     document.getElementById('errorMsg').classList.add('show');
   }
 }
@@ -847,10 +870,10 @@ function login() {
 // تسجيل الخروج
 function logout() {
   if (confirm('هل تريد تسجيل الخروج؟')) {
+    currentPin = "";
     document.getElementById('loginPage').style.display = 'flex';
     document.getElementById('dashboardPage').classList.remove('show');
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
+    document.getElementById('pin').value = '';
     selectedOrders.clear();
     updateDeleteButton();
   }
@@ -858,12 +881,14 @@ function logout() {
 
 // تحميل الطلبات من Google Sheet
 async function loadOrders() {
-  try {
-    const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getOrders', {
-      method: 'GET',
-      mode: 'cors'
-    });
+  if (!currentPin) {
+    alert("الرجاء تسجيل الدخول أولاً");
+    logout();
+    return;
+  }
 
+  try {
+    const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getOrders&pin=${encodeURIComponent(currentPin)}`);
     const data = await response.json();
 
     if (data.success && data.orders) {
@@ -883,6 +908,11 @@ async function loadOrders() {
     alert("❌ خطأ في تحميل الطلبات");
   }
 }
+
+let allOrders = [];
+let filteredOrders = [];
+let selectedOrders = new Set();
+let currentOrderForPrint = null;
 
 // تحديث الإحصائيات
 function updateStats() {
@@ -1015,6 +1045,11 @@ function cancelDelete() {
 
 // تأكيد الحذف
 async function confirmDelete() {
+  if (!currentPin) {
+    alert("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
   try {
     const ordersToDelete = Array.from(selectedOrders);
     
@@ -1022,7 +1057,8 @@ async function confirmDelete() {
       method: 'POST',
       body: JSON.stringify({
         action: 'deleteMultiple',
-        orderIds: ordersToDelete
+        orderIds: ordersToDelete,
+        pin: currentPin
       })
     });
 
@@ -1033,7 +1069,7 @@ async function confirmDelete() {
       await loadOrders();
       alert(`✅ تم حذف ${data.deletedCount || ordersToDelete.length} طلب${(data.deletedCount || ordersToDelete.length) > 1 ? 'ات' : ''} بنجاح`);
     } else {
-      alert(`❌ خطأ: ${data.message || data.error}`);
+      alert(`❌ خطأ: ${data.message || data.error || "غير مصرح"}`);
     }
     
   } catch (error) {
@@ -1103,8 +1139,8 @@ function getProductPrice(productName) {
     "Hashtag BOSS": 110,
     "Hashtag DIVA": 110,
     "Hashtag BOTH": 110,
-     "LIGHT Hashtag": 110,
-       "Cozy": 350
+    "LIGHT Hashtag": 110,
+    "Cozy": 350
   };
 
   for (const key in prices) {
@@ -1363,11 +1399,14 @@ window.onclick = function(event) {
 
 // تفعيل الضغط على Enter في حقول الإدخال
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('password').addEventListener('keypress', function(e) {
+  document.getElementById('pin').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
       login();
     }
   });
+  
+  // تعيين التركيز على حقل PIN عند تحميل الصفحة
+  document.getElementById('pin').focus();
 });
 </script>
 </body>
